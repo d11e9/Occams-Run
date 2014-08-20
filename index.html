@@ -131,6 +131,8 @@
 						if ( players.length > 1 || (players.length == 1 && !contract.storage[sender.address]) ) {
 							var payoutTotal = stake + val;
 
+							// TODO: Make distribution proportional to player stake, not equal
+
 							if (contract.storage[sender.address]) {
 								console.log( 'Splitting', payoutTotal, ' between ', players.length - 1, ' players.')
 								var payout = payoutTotal / ( players.length - 1 );
