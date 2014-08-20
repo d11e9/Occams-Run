@@ -36,7 +36,7 @@
 
 		<div class="interface">
 			<p>Your account: <span class="balance">0</span> ETH</p>
-			<p> <input type="text" value="0" /> <button>Send</button> <button>Withdraw</button></p>
+			<p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
 		</div>
 
 		<div class="log">
@@ -79,7 +79,7 @@
 			}
 
 			Account.prototype.receiveTx = function( fromAccount, valueReceived, action) {
-				console.log( this.address + ' recieved ', valueReceived, ' from ', fromAccount.address )
+				console.log( this.address + ' recieved ', valueReceived, ' from ', fromAccount.address, ' with action: ', action )
 				this.value += valueReceived;
 				MOCKACCOUNTS[this.address] += valueReceived;
 				if ( this.handleReceiveAction ) {
@@ -96,10 +96,9 @@
 				}
 
 				this.account = new Account( address, value, function( sender, val, action ) {
-					if (contract.storage[sender.address]) {
-
-						// Allow withdrawing from the game at no loss.
-						if ( action === 'withdraw' ) {
+					// Allow withdrawing from the game at no loss.
+					if ( action === 'withdraw' ) {
+						if (contract.storage[sender.address]) {
 							contract.account.sendValue( sender, contract.storage[sender.address] + val , null );
 							delete contract.storage[sender.address];
 							$('.playerCount').html( Object.keys(contract.storage).length )
@@ -195,6 +194,14 @@
 
 				$('.interface .send').click( function(){
 					players[0].sendValue( occamsrun.account, parseInt( $('.amount').val() ) )
+					$('.balance').html( players[0].value )
+					$('.playerCount').html( Object.keys(occamsrun.storage).length )
+				});
+
+				$('.interface .withdraw').click( function(){
+					players[0].sendValue( occamsrun.account, 0, 'withdraw' )
+					$('.balance').html( players[0].value )
+					$('.playerCount').html( Object.keys(occamsrun.storage).length )
 				});
 
 				
