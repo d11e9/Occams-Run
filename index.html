@@ -13,7 +13,7 @@
 			.header {
 				margin: 5em 0;
 			}
-			.interface, .info {
+			.int, .info {
 				text-align: left;
 				margin-bottom: 5em;
 			}
@@ -34,13 +34,24 @@
 			<p>Players: <span class="playerCount">0</span></p>
 		</div>
 
-		<div class="interface">
-			<p>Your account: <span class="balance">0</span> ETH</p>
+		<div class="int interface0">
+			<p>Player 1 account: <span class="balance">0</span> ETH</p>
+			<p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
+		</div>
+		
+		<div class="int interface1">
+			<p>Player 2 account: <span class="balance">0</span> ETH</p>
 			<p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
 		</div>
 
-		<div class="log">
-			
+		<div class="int interface2">
+			<p>Player 3 account: <span class="balance">0</span> ETH</p>
+			<p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
+		</div>
+
+		<div class="int interface3">
+			<p>Player 4 account: <span class="balance">0</span> ETH</p>
+			<p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
 		</div>
 
 
@@ -88,7 +99,7 @@
 			}
 
 
-			function Contract ( address, value ) {
+			function Contract ( address, value, changeCallBack ) {
 				var contract = this;
 
 				this.getCoinToss = function(){
@@ -101,8 +112,7 @@
 						if (contract.storage[sender.address]) {
 							contract.account.sendValue( sender, contract.storage[sender.address] + val , null );
 							delete contract.storage[sender.address];
-							$('.playerCount').html( Object.keys(contract.storage).length )
-							$('.occamsBalance').html( contract.account.value )
+							changeCallBack()
 							return true;
 						}
 					}
@@ -117,7 +127,7 @@
 
 						console.log( sender.address + ' increased stake by ' + val + ' to a total of ' + (stake + val) )
 						contract.storage[sender.address] = stake + val
-						$('.occamsBalance').html( contract.account.value )
+						changeCallBack()
 						return true;
 
 					// or leave them with nothing!
@@ -158,8 +168,7 @@
 						}
 
 						delete contract.storage[sender.address];
-						$('.playerCount').html( Object.keys(contract.storage).length )
-						$('.occamsBalance').html( contract.account.value )
+						changeCallBack()
 						return false;
 					}
 
@@ -168,8 +177,19 @@
 				this.storage = {};
 			}
 
+
+			function updateInterface () {
+				for (var x = 0; x < players.length; x++) {
+					$('.interface'+x+' .balance').html( players[x].value )
+					$('.playerCount').html( Object.keys(occamsrun.storage).length )
+				}
+
+				$('.playerCount').html( Object.keys(occamsrun.storage).length )
+				$('.occamsBalance').html( occamsrun.account.value )
+			}
+
 			var players = [ new Account('PPP1', 100), new Account('PPP2', 100), new Account('PPP3', 100), new Account('PPP4', 100) ]
-			var occamsrun = new Contract( 'CCC1', 0)
+			var occamsrun = new Contract( 'CCC1', 0, updateInterface )
 
 			$(function(){
 
@@ -190,21 +210,25 @@
 				players[1].sendValue( players[2], 10 )
 
 				
+				
 				for (var x = 0; x < players.length; x++) {
+
+					(function(x){
+						$('.interface'+x+' .send').click( function(){
+							console.log( players, x )
+							players[x].sendValue( occamsrun.account, parseInt( $('.interface'+x+' .amount').val() ) )
+							updateInterface( x )
+						});
+
+						$('.interface'+x+' .withdraw').click( function(){
+							players[x].sendValue( occamsrun.account, 0, 'withdraw' )
+							updateInterface( x )
+						});
+					})(x);
+
 					tick(x, 10);
 				}
 
-				$('.interface .send').click( function(){
-					players[0].sendValue( occamsrun.account, parseInt( $('.amount').val() ) )
-					$('.balance').html( players[0].value )
-					$('.playerCount').html( Object.keys(occamsrun.storage).length )
-				});
-
-				$('.interface .withdraw').click( function(){
-					players[0].sendValue( occamsrun.account, 0, 'withdraw' )
-					$('.balance').html( players[0].value )
-					$('.playerCount').html( Object.keys(occamsrun.storage).length )
-				});
 
 				
 
@@ -216,8 +240,8 @@
 						players[x].register();
 						total += players[x].value
 					}
+					updateInterface( x )
 					console.log( 'Total Stake: ', occamsrun.account.value, ' Total Player balances:', total, ' checksum: ', total + occamsrun.account.value )
-					$('.balance').html( players[0].value )
 				}
 			})
 
