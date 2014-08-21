@@ -8,6 +8,7 @@ function Account( address, value, onUpdateHandler, handleReceiveAction, self ) {
 
 	this.init = function (address, value, onUpdateHandler, handleReceiveAction, self) {
 
+		address = this.address || address;
 		console.log( 'INIT: ', address, this )
 		if (typeof address !== 'string') throw new Error('Address provided to init() was not a string')
 		this.__self = self;
@@ -71,7 +72,7 @@ Account.prototype.sendValue = function( toAccount, valueSent, action ) {
 
 Account.prototype.receiveTx = function( fromAccount, valueReceived, action) {
 	this.register()
-	console.log( this.address + '(' + this.value + ') recieved ', valueReceived, ' from ', fromAccount.address, ' with action: ', action )
+	console.log( this.address + '(' + this.value + ') recieved ', valueReceived, ' from ', fromAccount.address, ' with action: ', action, 'is contract: ', typeof this.__self !== 'undefined' )
 	this.value += valueReceived;
 	MOCKACCOUNTS[this.address].value += valueReceived;
 	if ( this.handleReceiveAction ) {
@@ -111,10 +112,10 @@ function Contract ( address, value, CONTRACT, onUpdateHandler ) {
 
 	this.init = function ( address, value, handleReceiveAction, onUpdateHandler, storage ) {
 
-		console.log( 'INIT:', address, this  )
+		console.log( 'INIT c:', address, this  )
 		this.handleReceiveAction = handleReceiveAction;
 		this.onUpdateHandler = onUpdateHandler;
-		this.account = new Account( address, value, handleReceiveAction, this.onUpdateHandler );
+		this.account = new Account( address, value, handleReceiveAction, this.onUpdateHandler, this );
 		this.storage = storage;
 	}
 
@@ -132,6 +133,8 @@ Contract.prototype.register = function(){
 	} else {
 		MOCKACCOUNTS[this.account.address] = {}
 		MOCKACCOUNTS[this.account.address].account = this.account
+		MOCKACCOUNTS[this.account.address].address = this.account.address
+		MOCKACCOUNTS[this.account.address].value = this.account.value
 		
 		MOCKACCOUNTS[this.account.address].onUpdateHandler = this.state().onUpdateHandler;
 		MOCKACCOUNTS[this.account.address].handleReceiveAction = this.state().handleReceiveAction;
