@@ -17,6 +17,8 @@
 				text-align: left;
 				margin-bottom: 5em;
 			}
+
+			.players span { margin-right: 2em; }
 		</style>
 		<script src="jquery.min.js"></script>
 	</head>
@@ -32,6 +34,7 @@
 		<div class="info">
 			<p>Occam's Run balance: <span class="occamsBalance">0</span> ETH</p>
 			<p>Players: <span class="playerCount">0</span></p>
+			<p class="players"></p>
 		</div>
 
 		<div class="int interface0">
@@ -54,150 +57,122 @@
 			<p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
 		</div>
 
-
+		<script src="mocketh.js"></script>
 		<script>
 
-			var MOCKACCOUNTS = {
-			}
+			
 
 
-			function Account( address, value, handleReceiveAction ) {
-				console.log( 'creating account ' + address + ' with ' + value + ' value. is contract:', typeof handleReceiveAction !== 'undefined' )
-				this.address = address;
-				this.value = value;
-				this.handleReceiveAction = handleReceiveAction
-			}
-
-
-
-			Account.prototype.register = function(){
-				if (MOCKACCOUNTS[this.address]) {
-					this.value = MOCKACCOUNTS[this.address];
-				} else {
-					MOCKACCOUNTS[this.address] = this.value;
-				}
-			}
-
-			Account.prototype.sendValue = function( toAccount, valueSent, action ) {
-				if (valueSent > this.value) {
-					console.log('Not enough Funds ('+this.value+') to send', valueSent)
-					return false;
-				}
-				console.log( this.address + ' sent ', valueSent, ' to ', toAccount.address )
-				this.value -= valueSent;
-				MOCKACCOUNTS[this.address] -= valueSent;
-				toAccount.receiveTx( this, valueSent, action );
-			}
-
-			Account.prototype.receiveTx = function( fromAccount, valueReceived, action) {
-				console.log( this.address + ' recieved ', valueReceived, ' from ', fromAccount.address, ' with action: ', action )
-				this.value += valueReceived;
-				MOCKACCOUNTS[this.address] += valueReceived;
-				if ( this.handleReceiveAction ) {
-					this.handleReceiveAction( fromAccount, valueReceived, action )
-				}
-			}
-
-
-			function Contract ( address, value, changeCallBack ) {
-				var contract = this;
-
-				this.getCoinToss = function(){
-					return Math.floor(Math.random() * 2);
+			function updateInterface (options) {
+				if (options) {
+					console.log( 'Updating interface due to change in: ' );
+					if (options.address) console.log( '  Address ', options.address, 'in: ' )
+					if (options.value) console.log( '  Value: ', options.value )
+					if (options.storage) console.log( '  Storage: ', options.storage )
 				}
 
-				this.account = new Account( address, value, function( sender, val, action ) {
-					// Allow withdrawing from the game at no loss.
-					if ( action === 'withdraw' ) {
-						if (contract.storage[sender.address]) {
-							contract.account.sendValue( sender, contract.storage[sender.address] + val , null );
-							delete contract.storage[sender.address];
-							changeCallBack()
-							return true;
-						}
-					}
-
-					// All things being equal (50/50)
-					// Only the brave will win
-					// either increase senders wager
-
-					var stake = (contract.storage[sender.address] || 0 )
-
-					if ( contract.getCoinToss() ) {
-
-						console.log( sender.address + ' increased stake by ' + val + ' to a total of ' + (stake + val) )
-						contract.storage[sender.address] = stake + val
-						changeCallBack()
-						return true;
-
-					// or leave them with nothing!
-					} else {
-						
-						console.log( sender.address + ' LOSES: ', stake + val )
-
-						// and distribute their wealth to Remaining players (if any)
-						var players = Object.keys( contract.storage )
-
-						if ( players.length > 1 || (players.length == 1 && !contract.storage[sender.address]) ) {
-							var payoutTotal = stake + val;
-
-							// TODO: Make distribution proportional to player stake, not equal
-
-							if (contract.storage[sender.address]) {
-								console.log( 'Splitting', payoutTotal, ' between ', players.length - 1, ' players.')
-								var payout = payoutTotal / ( players.length - 1 );
-							} else {
-								console.log( 'Splitting', payoutTotal, ' between ', players.length, ' players.')
-								var payout = payoutTotal / players.length;
-							}
-
-							for (var address in players) {
-								if ( players[address] !== sender.address ) {
-									var player = new Account( players[address], 0 );
-									player.register();
-
-									console.log( 'Distributing ', payout, ' of ', sender.address + 's wealth to player ' + player.address );
-									contract.account.sendValue( player, payout );
-								}
-							}
-						} else {
-							// its their lucky day and there are no remaining players to distribute weealth to
-							// so instead of making a profit this contract will return the wager and their wealth
-							console.log( 'It\'s ' + sender.address + 's lucky day have it back')
-							contract.account.sendValue( sender, stake + val);
-						}
-
-						delete contract.storage[sender.address];
-						changeCallBack()
-						return false;
-					}
-
-				});
-				this.account.register();
-				this.storage = {};
-			}
-
-
-			function updateInterface () {
 				for (var x = 0; x < players.length; x++) {
+					players[x].register();
 					$('.interface'+x+' .balance').html( players[x].value )
-					$('.playerCount').html( Object.keys(occamsrun.storage).length )
 				}
+
+				occamsrun.register()
 
 				$('.playerCount').html( Object.keys(occamsrun.storage).length )
 				$('.occamsBalance').html( occamsrun.account.value )
+
+				var ingame_players = Object.keys(occamsrun.storage);
+				$('.info .players').html( '' )
+				for (var y =0; y < ingame_players.length; y++ ) {
+					$('.info .players').append( $('<span/>').html(ingame_players[y] + ':' + occamsrun.storage[ingame_players[y]]) )
+				}
+
+
 			}
 
-			var players = [ new Account('PPP1', 100), new Account('PPP2', 100), new Account('PPP3', 100), new Account('PPP4', 100) ]
-			var occamsrun = new Contract( 'CCC1', 0, updateInterface )
+			var players = [ 
+				new Account('PPP1', 100, updateInterface),
+				new Account('PPP2', 100, updateInterface),
+				new Account('PPP3', 100, updateInterface),
+				new Account('PPP4', 100, updateInterface)
+			];
+
+			var OCCAM_CONTRACT = function( sender, val, action, changeCallBack, contract ) {
+
+				// console.log( "Contract: ", contract )
+
+				// Allow withdrawing from the game at no loss.
+				if ( action === 'withdraw' ) {
+					if (contract.storage[sender.address]) {
+						contract.account.sendValue( sender, contract.storage[sender.address] + val , null );
+						delete contract.storage[sender.address];
+						changeCallBack({address: contract.account.address, storage: contract.storage, value: contract.account.value })
+						return true;
+					}
+				}
+
+				// All things being equal (50/50)
+				// Only the brave will win
+				// either increase senders wager
+
+				var stake = (contract.storage[sender.address] || 0 )
+
+				if ( contract.getCoinToss() ) {
+
+					console.log( sender.address + ' increased stake by ' + val + ' to a total of ' + (stake + val) )
+					contract.storage[sender.address] = stake + val
+					changeCallBack( {address: contract.account.address, storage: contract.storage, value: contract.account.value })
+					return true;
+
+				// or leave them with nothing!
+				} else {
+					
+					console.log( sender.address + ' LOSES: ', stake + val )
+
+					// and distribute their wealth to Remaining players (if any)
+					var players = Object.keys( contract.storage )
+
+					if ( players.length > 1 || (players.length == 1 && !contract.storage[sender.address]) ) {
+						var payoutTotal = stake + val;
+
+						// TODO: Make distribution proportional to player stake, not equal
+
+						if (contract.storage[sender.address]) {
+							console.log( 'Splitting', payoutTotal, ' between ', players.length - 1, ' players.')
+							var payout = payoutTotal / ( players.length - 1 );
+						} else {
+							console.log( 'Splitting', payoutTotal, ' between ', players.length, ' players.')
+							var payout = payoutTotal / players.length;
+						}
+
+						for (var address in players) {
+							if ( players[address] !== sender.address ) {
+								var player = new Account( players[address], 0 );
+								player.register()
+								console.log( 'Distributing ', payout, ' of ', sender.address + 's wealth to player ' + player.address );
+								contract.account.sendValue( player, payout );
+							}
+						}
+					} else {
+						// its their lucky day and there are no remaining players to distribute weealth to
+						// so instead of making a profit this contract will return the wager and their wealth
+						console.log( 'It\'s ' + sender.address + 's lucky day have it back')
+						contract.account.sendValue( sender, stake + val);
+					}
+
+					if (contract.storage[sender.address]) {
+						delete contract.storage[sender.address];
+						changeCallBack( {address: contract.account.address, storage: contract.storage })
+					}
+					return false;
+				}
+
+			}
+			var occamsrun = new Contract( 'CCC1', 0, OCCAM_CONTRACT, updateInterface )
+			occamsrun.register()
+			
 
 			$(function(){
-
-				players[0].register()
-				players[1].register()
-				players[2].register()
-				players[3].register()
-
 
 				console.log( 'go' );
 
@@ -207,7 +182,7 @@
 
 				console.log( occamsrun )
 
-				players[1].sendValue( players[2], 10 )
+				// players[1].sendValue( players[2], 10 )
 
 				
 				
@@ -217,12 +192,12 @@
 						$('.interface'+x+' .send').click( function(){
 							console.log( players, x )
 							players[x].sendValue( occamsrun.account, parseInt( $('.interface'+x+' .amount').val() ) )
-							updateInterface( x )
+							
 						});
 
 						$('.interface'+x+' .withdraw').click( function(){
 							players[x].sendValue( occamsrun.account, 0, 'withdraw' )
-							updateInterface( x )
+							
 						});
 					})(x);
 
@@ -233,6 +208,7 @@
 				
 
 				function tick(x, v) {
+					players[x].register();
 					players[x].sendValue( occamsrun.account, v )
 					console.log( occamsrun.storage, players[x] )
 					var total = 0;
@@ -240,7 +216,6 @@
 						players[x].register();
 						total += players[x].value
 					}
-					updateInterface( x )
 					console.log( 'Total Stake: ', occamsrun.account.value, ' Total Player balances:', total, ' checksum: ', total + occamsrun.account.value )
 				}
 			})
