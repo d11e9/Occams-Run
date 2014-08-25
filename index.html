@@ -96,21 +96,25 @@
             
         </div>
 
-        <script src="mocketh.js"></script>
+        <script src="poly-eth/index.js"></script>
         <script>
 
-                eth.ready( function(){
+                var OCCAMSRUN_ADDRESS = '8815f6289f656e5148b7d4dee93d5d96ee7ece8f';
 
-                    eth( 'OCCAMSRUN_ADDRESS' ).on( 'change', updateInfo )
-                    eth( 'SELF' ).on( 'change', updateInterface )
+                eth.changed.connect( function(){
+
+                    var SELF_ADDRESS = eth.secretToAddress(eth.key);
+
+                    eth.watch( OCCAMSRUN_ADDRESS, updateInfo );
+                    eth.watch( SELF_ADDRESS, updateInterface );
 
                     function updateInfo( occam ) {
-                        $('.occamsBalance').html( occam.value )
-                        $('.playerCount').html( occam['PLAYER_COUNT'] )
+                        $('.occamsBalance').html( eth.balanceAt( OCCAMSRUN_ADDRESS ) )
+                        $('.playerCount').html( eth.storageAt( OCCAMSRUN_ADDRESS, '0x17' ) )
                     }
 
                     function updateInterface( player ) {
-                        $('.balance').html( palyer.value )
+                        $('.balance').html( eth.balanceAt( eth.secretToAddress(eth.key) )
                     }
 
                     function send() {
