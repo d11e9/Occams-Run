@@ -96,17 +96,21 @@
             
         </div>
 
-        <script src="poly-eth/index.js"></script>
+        <script src="poly-eth/poly-eth.bundle.js"></script>
         <script>
 
+                var eth = polyeth( null || eth );
                 var OCCAMSRUN_ADDRESS = '8815f6289f656e5148b7d4dee93d5d96ee7ece8f';
 
-                eth.changed.connect( function(){
+                eth.ready( function(){
 
                     var SELF_ADDRESS = eth.secretToAddress(eth.key);
 
                     eth.watch( OCCAMSRUN_ADDRESS, updateInfo );
                     eth.watch( SELF_ADDRESS, updateInterface );
+
+                    $('.send').click( send )
+                    $('.withdraw').click( withdraw )
 
                     function updateInfo( occam ) {
                         $('.occamsBalance').html( eth.balanceAt( OCCAMSRUN_ADDRESS ) )
@@ -114,7 +118,7 @@
                     }
 
                     function updateInterface( player ) {
-                        $('.balance').html( eth.balanceAt( eth.secretToAddress(eth.key) )
+                        $('.balance').html( eth.balanceAt( eth.secretToAddress(eth.key) ) )
                     }
 
                     function send() {
@@ -126,8 +130,6 @@
                         eth.sendTX( occam, value, ['withdraw'],function(){ } )   
                     }
 
-                    $('.send').click( send )
-                    $('.withdraw').click( withdraw )
 
                 })
 
