@@ -41,11 +41,34 @@
             }
             .int, .info {
                 text-align: left;
+                margin: 0 auto;
                 margin-bottom: 5em;
                 padding: 0 1em;
                 max-width:  40em;
-                margin: 0 auto;
+                overflow: auto;
             }
+
+            .amount {
+                background-color: rgba( 255,255,255,0.2);
+                padding: 0.4em;
+                border: 0 none;
+                color: white;
+                margin-left: 1em;
+            }
+
+            button {
+                background-color: #f41e23;
+                padding: 0.4em;
+                border: 0 none;
+                color: white;
+                font-weight: bold;
+                border-radius: 0.4em;
+                cursor: pointer;
+            }
+
+            .left { float: left; }
+            .right { float: right; }
+
             .players span { margin-right: 2em; }
         </style>
         <script src="jquery.min.js"></script>
@@ -61,14 +84,14 @@
             </div>
 
             <div class="info">
-                <p>Occam's Run balance: <span class="occamsBalance">0</span> ETH</p>
-                <p>Players: <span class="playerCount">0</span></p>
-                <p class="players"></p>
+                <p class="left">Occam's Run balance: <span class="occamsBalance">0</span> ETH</p>
+                <p class="right">Players: <span class="playerCount">0</span></p>
             </div>
 
             <div class="int interface0">
-                <p>Player 1 account: <span class="balance">0</span> ETH</p>
-                <p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
+                <p>You have <span class="balance">0</span> ETH at stake.</p>
+                <p class="left"><button class="send" title="Theres a 50/50 chance you will increase your stake or lose everything.">Send</button><input class="amount" type="text" value="0" /> ETH </p>
+                <p class="right"> <button class="withdraw" title="Withdraw all ETH you have at stake.">Withdraw</button></p>
             </div>
             
         </div>
