@@ -1,228 +1,111 @@
 <html>
-	<head>
-		<title>Occams Run</title>
-		<style>
-			html, body {
-				margin: 0 auto;
-				padding: 0 5em;
-				font-family: monospace;
-				text-align: center;
-				max-width: 40em;
+    <head>
+        <title>Occams Run</title>
+        <style>
 
-			}
-			.header {
-				margin: 5em 0;
-			}
-			.int, .info {
-				text-align: left;
-				margin-bottom: 5em;
-			}
+            body {
+                background-color: black;
+                background-image: url('run.gif');
+                background-repeat: no-repeat;
+                background-size: contain;
+                background-position: center bottom;
+            }
+            html, body {
+                font-family: monospace;
+                margin: 0;
+                padding: 0;
+                background-color: black;
+            }
 
-			.players span { margin-right: 2em; }
-		</style>
-		<script src="jquery.min.js"></script>
-	</head>
-	<body>
-		
-		<div class="header">
-			<h1>
-				<img src="logo.png" alt="Occam's Run">
-			</h1>
-			<p>All things being equal (50/50) only The Brave will win.</p>
-		</div>
+            #wrapper {
+                padding: 0 5em;
+                color: white;
+                height: 100%;
+                background-color: rgba( 0,0,0,0.8);
+            }
+            .header {
+                text-align: center;
+                margin: 0 auto;
+                max-width:  40em;
+                margin-bottom: 5em;
+            }
 
-		<div class="info">
-			<p>Occam's Run balance: <span class="occamsBalance">0</span> ETH</p>
-			<p>Players: <span class="playerCount">0</span></p>
-			<p class="players"></p>
-		</div>
+            .header h1 {
+                margin: 0;
+                padding: 0;
+            }
+            .header h1 img { width: 100%; }
+            .header p {
+                font-size: 2em;
+                font-weight: bold;
+            }
+            .int, .info {
+                text-align: left;
+                margin-bottom: 5em;
+                padding: 0 1em;
+                max-width:  40em;
+                margin: 0 auto;
+            }
+            .players span { margin-right: 2em; }
+        </style>
+        <script src="jquery.min.js"></script>
+    </head>
+    <body>
+        
+        <div id="wrapper">
+            <div class="header">
+                <h1>
+                    <img src="logo.png" alt="Occam's Run">
+                </h1>
+                <p>All things being equal (50/50) only the brave will win.</p>
+            </div>
 
-		<div class="int interface0">
-			<p>Player 1 account: <span class="balance">0</span> ETH</p>
-			<p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
-		</div>
-		
-		<div class="int interface1">
-			<p>Player 2 account: <span class="balance">0</span> ETH</p>
-			<p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
-		</div>
+            <div class="info">
+                <p>Occam's Run balance: <span class="occamsBalance">0</span> ETH</p>
+                <p>Players: <span class="playerCount">0</span></p>
+                <p class="players"></p>
+            </div>
 
-		<div class="int interface2">
-			<p>Player 3 account: <span class="balance">0</span> ETH</p>
-			<p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
-		</div>
+            <div class="int interface0">
+                <p>Player 1 account: <span class="balance">0</span> ETH</p>
+                <p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
+            </div>
+            
+        </div>
 
-		<div class="int interface3">
-			<p>Player 4 account: <span class="balance">0</span> ETH</p>
-			<p> <input class="amount" type="text" value="0" /> <button class="send">Send</button> <button class="withdraw">Withdraw</button></p>
-		</div>
+        <script src="mocketh.js"></script>
+        <script>
 
-		<script src="mocketh.js"></script>
-		<script>
+                eth.ready( function(){
 
-			
+                    eth( 'OCCAMSRUN_ADDRESS' ).on( 'change', updateInfo )
+                    eth( 'SELF' ).on( 'change', updateInterface )
 
+                    function updateInfo( occam ) {
+                        $('.occamsBalance').html( occam.value )
+                        $('.playerCount').html( occam['PLAYER_COUNT'] )
+                    }
 
-			function updateInterface (options) {
-				if (options) {
-					console.log( 'Updating interface due to change in: ' );
-					if (options.address) console.log( '  Address ', options.address, 'in: ' )
-					if (options.value) console.log( '  Value: ', options.value )
-					if (options.storage) console.log( '  Storage: ', options.storage )
-				}
+                    function updateInterface( player ) {
+                        $('.balance').html( palyer.value )
+                    }
 
-				for (var x = 0; x < players.length; x++) {
-					players[x].register();
-					$('.interface'+x+' .balance').html( players[x].value )
-				}
+                    function send() {
+                        var value = parseInt( $('.amount').val() );
+                        eth.sendTX( occam, value, [], function(){ } )
+                    }
 
-				occamsrun.register()
+                    function withdraw(){
+                        eth.sendTX( occam, value, ['withdraw'],function(){ } )   
+                    }
 
-				$('.playerCount').html( Object.keys(occamsrun.storage).length )
-				$('.occamsBalance').html( occamsrun.account.value )
+                    $('.send').click( send )
+                    $('.withdraw').click( withdraw )
 
-				var ingame_players = Object.keys(occamsrun.storage);
-				$('.info .players').html( '' )
-				for (var y =0; y < ingame_players.length; y++ ) {
-					$('.info .players').append( $('<span/>').html(ingame_players[y] + ':' + occamsrun.storage[ingame_players[y]]) )
-				}
+                })
 
-
-			}
-
-			var players = [ 
-				new Account('PPP1', 100, updateInterface),
-				new Account('PPP2', 100, updateInterface),
-				new Account('PPP3', 100, updateInterface),
-				new Account('PPP4', 100, updateInterface)
-			];
-
-			var OCCAM_CONTRACT = function( sender, val, action, changeCallBack, contract ) {
-
-				// console.log( "Contract: ", contract )
-
-				// Allow withdrawing from the game at no loss.
-				if ( action === 'withdraw' ) {
-					if (contract.storage[sender.address]) {
-						contract.account.sendValue( sender, contract.storage[sender.address] + val , null );
-						delete contract.storage[sender.address];
-						changeCallBack({address: contract.account.address, storage: contract.storage, value: contract.account.value })
-						return true;
-					}
-				}
-
-				// All things being equal (50/50)
-				// Only the brave will win
-				// either increase senders wager
-
-				var stake = (contract.storage[sender.address] || 0 )
-
-				if ( contract.getCoinToss() ) {
-
-					console.log( sender.address + ' increased stake by ' + val + ' to a total of ' + (stake + val) )
-					contract.storage[sender.address] = stake + val
-					changeCallBack( {address: contract.account.address, storage: contract.storage, value: contract.account.value })
-					return true;
-
-				// or leave them with nothing!
-				} else {
-					
-					console.log( sender.address + ' LOSES: ', stake + val )
-
-					// and distribute their wealth to Remaining players (if any)
-					var players = Object.keys( contract.storage )
-
-					if ( players.length > 1 || (players.length == 1 && !contract.storage[sender.address]) ) {
-						var payoutTotal = stake + val;
-
-						// TODO: Make distribution proportional to player stake, not equal
-
-						if (contract.storage[sender.address]) {
-							console.log( 'Splitting', payoutTotal, ' between ', players.length - 1, ' players.')
-							var payout = payoutTotal / ( players.length - 1 );
-						} else {
-							console.log( 'Splitting', payoutTotal, ' between ', players.length, ' players.')
-							var payout = payoutTotal / players.length;
-						}
-
-						for (var address in players) {
-							if ( players[address] !== sender.address ) {
-								var player = new Account( players[address], 0 );
-								player.register()
-								console.log( 'Distributing ', payout, ' of ', sender.address + 's wealth to player ' + player.address );
-								contract.account.sendValue( player, payout );
-							}
-						}
-					} else {
-						// its their lucky day and there are no remaining players to distribute weealth to
-						// so instead of making a profit this contract will return the wager and their wealth
-						console.log( 'It\'s ' + sender.address + 's lucky day have it back')
-						contract.account.sendValue( sender, stake + val);
-					}
-
-					if (contract.storage[sender.address]) {
-						delete contract.storage[sender.address];
-						changeCallBack( {address: contract.account.address, storage: contract.storage })
-					}
-					return false;
-				}
-
-			}
-			var occamsrun = new Contract( 'CCC1', 0, OCCAM_CONTRACT, updateInterface )
-			occamsrun.register()
-			
-
-			$(function(){
-
-				console.log( 'go' );
+        </script>
 
 
-				// test
-
-
-				console.log( occamsrun )
-
-				// players[1].sendValue( players[2], 10 )
-
-				
-				
-				for (var x = 0; x < players.length; x++) {
-
-					(function(x){
-						$('.interface'+x+' .send').click( function(){
-							console.log( players, x )
-							players[x].sendValue( occamsrun.account, parseInt( $('.interface'+x+' .amount').val() ) )
-							
-						});
-
-						$('.interface'+x+' .withdraw').click( function(){
-							players[x].sendValue( occamsrun.account, 0, 'withdraw' )
-							
-						});
-					})(x);
-
-					tick(x, 10);
-				}
-
-
-				
-
-				function tick(x, v) {
-					players[x].register();
-					players[x].sendValue( occamsrun.account, v )
-					console.log( occamsrun.storage, players[x] )
-					var total = 0;
-					for (var x = 0; x < players.length; x++) {
-						players[x].register();
-						total += players[x].value
-					}
-					console.log( 'Total Stake: ', occamsrun.account.value, ' Total Player balances:', total, ' checksum: ', total + occamsrun.account.value )
-				}
-			})
-
-
-		</script>
-
-
-	</body>
+    </body>
 </html>
