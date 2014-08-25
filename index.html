@@ -104,8 +104,8 @@
         <script src="poly-eth/poly-eth.bundle.js"></script>
         <script>
 
-                var eth = polyeth( typeof eth === 'undefined' ? undefined : eth );
-                var OCCAMSRUN_ADDRESS = '8815f6289f656e5148b7d4dee93d5d96ee7ece8f';
+                var polyeth = polyeth( typeof eth === 'undefined' ? undefined : eth );
+                var OCCAMSRUN_ADDRESS = '0x977bed08637eb96968a5f28a93eb5ea9c2692d5d';
 
                 function debug() {
 
@@ -118,34 +118,37 @@
                     debug("error:", err)
                 }
 
-                eth.ready( function(){
+                polyeth.ready( function(){
 
+                    debug( 'ready...' )
+
+                    var SELF_ADDRESS = polyeth.secretToAddress( polyeth.key );
+
+                    debug( SELF_ADDRESS, typeof SELF_ADDRESS )
+
+                    // polyeth.eth.watch( OCCAMSRUN_ADDRESS, updateInfo )
+
+                    polyeth.watch( OCCAMSRUN_ADDRESS, updateInfo );
                     
-
-                    var SELF_ADDRESS = eth.secretToAddress( eth.key );
-
-                    eth.watch( OCCAMSRUN_ADDRESS, updateInfo );
-                    eth.watch( SELF_ADDRESS, updateInterface );
 
                     $('.send').click( send )
                     $('.withdraw').click( withdraw )
 
-                    function updateInfo( occam ) {
-                        $('.occamsBalance').html( eth.balanceAt( OCCAMSRUN_ADDRESS ) )
-                        $('.playerCount').html( eth.storageAt( OCCAMSRUN_ADDRESS, '0x17' ) )
-                    }
-
-                    function updateInterface( player ) {
-                        $('.balance').html( eth.balanceAt( eth.secretToAddress(eth.key) ) )
+                    function updateInfo() {
+                        $('.occamsBalance').html( polyeth.balanceAt( OCCAMSRUN_ADDRESS ) )
+                        $('.playerCount').html( polyeth.storageAt( OCCAMSRUN_ADDRESS, '0x17' ) )
+                        $('.balance').html( polyeth.storageAt( OCCAMSRUN_ADDRESS, SELF_ADDRESS ) )
+                        debug( 'updated info')
                     }
 
                     function send() {
                         var value = parseInt( $('.amount').val() );
-                        eth.sendTX( occam, value, [], function(){ } )
+                        polyeth.sendTX( occam, value, [], function(){ } )
                     }
 
                     function withdraw(){
-                        eth.sendTX( occam, value, ['withdraw'],function(){ } )   
+                        debug( 'withdrawing', polyeth.storageAt( OCCAMSRUN_ADDRESS, SELF_ADDRESS ) )
+                        polyeth.transact( polyeth.key, '0x0', OCCAMSRUN_ADDRESS, [ '0x1'.bin() ], '0x10', '0x100', function(){debug('withdrawn')}) 
                     }
 
 
