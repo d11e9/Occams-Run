@@ -22,6 +22,7 @@
                 color: white;
                 height: 100%;
                 background-color: rgba( 0,0,0,0.8);
+                padding-bottom: 14em;
             }
             .header {
                 text-align: center;
@@ -93,18 +94,35 @@
                 <p class="left"><button class="send" title="Theres a 50/50 chance you will increase your stake or lose everything.">Send</button><input class="amount" type="text" value="0" /> ETH </p>
                 <p class="right"> <button class="withdraw" title="Withdraw all ETH you have at stake.">Withdraw</button></p>
             </div>
+
+            <div class="debug">
+                
+            </div>
             
         </div>
 
         <script src="poly-eth/poly-eth.bundle.js"></script>
         <script>
 
-                var eth = polyeth( null || eth );
+                var eth = polyeth( typeof eth === 'undefined' ? undefined : eth );
                 var OCCAMSRUN_ADDRESS = '8815f6289f656e5148b7d4dee93d5d96ee7ece8f';
+
+                function debug() {
+
+                    for (var x=0; x<arguments.length; x++) {
+                        $('.debug').append( $( '<p>'+arguments[x]+'</p>' ) )  
+                    }
+                }
+
+                window.onerror = function(err){
+                    debug("error:", err)
+                }
 
                 eth.ready( function(){
 
-                    var SELF_ADDRESS = eth.secretToAddress(eth.key);
+                    
+
+                    var SELF_ADDRESS = eth.secretToAddress( eth.key );
 
                     eth.watch( OCCAMSRUN_ADDRESS, updateInfo );
                     eth.watch( SELF_ADDRESS, updateInterface );
