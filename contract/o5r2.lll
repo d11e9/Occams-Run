@@ -270,6 +270,7 @@
     ;; Occam's Run v0.0.3
     ;; Actions:
     ;; data[0] == 1 then Withdraw Stake
+    ;; data[0] == 2 the Mine previous players wagers
     ;; data[0] == 9 then Kill Contract
     ;; callvalue > 0 then Play
     ;; else Nothing.
