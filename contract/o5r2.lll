@@ -288,6 +288,18 @@
             (return 0x0)
         })
 
+        ;; [2]: Mine 
+        (when (= (calldataload 0) 2) {
+            ;; Get oldestBlockNumber
+            ;; Get currentBlockNumber
+            ;; if oldestBlockNumber + 5 > currentBlockNumber
+            ;;      Append newestBlockNumber (prevhash)
+            ;; else
+            ;;      Process oldestBlockNumber (stake)
+            ;; 
+            (return 0x1)
+        })
+
         ;; [9]: Kill action
         (when (= (calldataload 0) 9) {
 
