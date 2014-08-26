@@ -266,18 +266,30 @@
         
     }
 
-    (returnlll {
 
-        ;; Occam's Run v0.0.3
-        ;; Actions:
-        ;; data[0] == 1 then Withdraw Stake
-        ;; data[0] == 9 then Kill Contract
-        ;; callvalue > 0 then Play
-        ;; else Nothing.
+    ;; Occam's Run v0.0.3
+    ;; Actions:
+    ;; data[0] == 1 then Withdraw Stake
+    ;; data[0] == 9 then Kill Contract
+    ;; callvalue > 0 then Play
+    ;; else Nothing.
+
+    (def "CREATOR_ADDRESS" 0x0)
+    (def "LAST_ACTION" 0x1)
+
+    (def "OLDEST_BLOCK" 0x2)
+    (def "OLDEST_TIME" 0x3)
+
+    (def "NEWEST_BLOCK" 0x4)
+    (def "NEWEST_TIME" 0x5)
+
+    [[CREATOR_ADDRESS]] (caller)
+
+    (returnlll {
 
         ;; [1]: Withdraw action
         (when (= (calldataload 0) 1) {
-            [[0x1]] 0x3
+            [[LAST_ACTION]] 0x5
             (when @@(caller){
                 [[(caller)]] 0x0
                 (removeFromList (caller))
@@ -290,18 +302,46 @@
 
         ;; [2]: Mine 
         (when (= (calldataload 0) 2) {
-            ;; Get oldestBlockNumber
-            ;; Get currentBlockNumber
-            ;; if oldestBlockNumber + 5 > currentBlockNumber
-            ;;      Append newestBlockNumber (prevhash)
-            ;; else
-            ;;      Process oldestBlockNumber (stake)
-            ;; 
-            (return 0x1)
+            [[LAST_ACTION]] 0x4
+
+            (when @@OLDEST_BLOCK {
+
+                [block_num] @@OLDEST_BLOCK
+                [timestamp] @@OLDEST_TIME
+                [player_add] @block_num
+                [player_wager] @timestamp
+
+                (unless @player_add (return 0x0))
+                (unless @player_wager (return 0x0))
+
+                ;; if the oldest block (head of queue) has matured
+                (when (<= (+ @block_num 5) (number)) {
+                    ;; process it
+                    ;; flip coin
+                    ;;      increase stake
+                    ;;      or distribute to stakeolders sans (caller)
+                    ;; remove it and repoint oldest block pointers to next one along
+                    (for [i]:@block_num (< @i (number)) [i](+ @i 1) {
+                        (when @@i {
+                            ;; do something
+                            [[OLDEST_BLOCK]] @i
+                            ;; [[OLDEST_TIME]] 
+                            (return 0x1)
+                        })
+                    })
+                })
+
+
+
+
+            })
+
+            (return 0x0)
         })
 
         ;; [9]: Kill action
         (when (= (calldataload 0) 9) {
+            [[LAST_ACTION]] 0x3
 
             ;; Only allow creator to kill
             (unless (= @@0x0 (caller)) {
@@ -316,9 +356,13 @@
 
         ;; []: No action => Play
         (when (> (callvalue) 0) {
-            [[0x1]] 0x2
-            [[0x2]] (prevhash)
-            [[0x3]] (number)
+            [[LAST_ACTION]] 0x2
+
+            ;; Play Action
+            ;; [[OLDEST_BLOCK]] (number)
+            ;; [[OLDEST_TIME]] (timestamp)
+            ;; [[(number)]] (caller)
+            ;; [[timestamp]] (callvalue)
 
             (if @@(caller) {
                 [[(caller)]] (+ @@(caller) (callvalue))

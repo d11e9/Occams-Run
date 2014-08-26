@@ -72,7 +72,9 @@
 
             .players span { margin-right: 2em; }
 
-
+            .debug {
+                display: none;
+            }
             .debug p {
                 line-height: 1.4em;
                 margin: 0;
@@ -85,7 +87,7 @@
         <div id="wrapper">
             <div class="header">
                 <h1>
-                    <img src="logo-0.0.2.png" alt="Occam's Run">
+                    <img class="logo" src="logo-0.0.2.png" alt="Occam's Run">
                 </h1>
                 <p>All things being equal (50/50) only the brave will win.</p>
             </div>
@@ -161,7 +163,7 @@
                 function send() {
                     var value = etherToWei( parseInt( $('.amount').val() ) );
                     // eth.transact(eth.key, "0", gavCoinAddr, "", "2000", eth.gasPrice);
-                    polyeth.transact( polyeth.key, value, OCCAMSRUN_ADDRESS, "", "2000", polyeth.eth.gasPrice, function(){debug('Sent ' + value + ' to Occam\'s Run.'  )}) 
+                    polyeth.transact( polyeth.key, value, OCCAMSRUN_ADDRESS, "", "2000", polyeth.eth.gasPrice, function(err){debug('Sent ' + value + ' to Occam\'s Run.', err  )}) 
                 }
 
                 function withdraw(){
@@ -178,6 +180,7 @@
 
                     debug( 'Attaching button handlers.')
 
+                    $('.logo').click( function(){$('.debug').toggle()})
                     $('.send').click( send )
                     $('.withdraw').click( withdraw )
 
