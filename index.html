@@ -22,6 +22,7 @@
                 color: white;
                 height: 100%;
                 background-color: rgba( 0,0,0,0.8);
+                padding-bottom: 14em;
             }
             .header {
                 text-align: center;
@@ -93,37 +94,63 @@
                 <p class="left"><button class="send" title="Theres a 50/50 chance you will increase your stake or lose everything.">Send</button><input class="amount" type="text" value="0" /> ETH </p>
                 <p class="right"> <button class="withdraw" title="Withdraw all ETH you have at stake.">Withdraw</button></p>
             </div>
+
+            <div class="debug">
+                
+            </div>
             
         </div>
 
-        <script src="mocketh.js"></script>
+        <script src="poly-eth/poly-eth.bundle.js"></script>
         <script>
 
-                eth.ready( function(){
+                var polyeth = polyeth( typeof eth === 'undefined' ? undefined : eth );
+                var OCCAMSRUN_ADDRESS = '0x977bed08637eb96968a5f28a93eb5ea9c2692d5d';
 
-                    eth( 'OCCAMSRUN_ADDRESS' ).on( 'change', updateInfo )
-                    eth( 'SELF' ).on( 'change', updateInterface )
+                function debug() {
 
-                    function updateInfo( occam ) {
-                        $('.occamsBalance').html( occam.value )
-                        $('.playerCount').html( occam['PLAYER_COUNT'] )
+                    for (var x=0; x<arguments.length; x++) {
+                        $('.debug').append( $( '<p>'+arguments[x]+'</p>' ) )  
                     }
+                }
 
-                    function updateInterface( player ) {
-                        $('.balance').html( palyer.value )
+                window.onerror = function(err){
+                    debug("error:", err)
+                }
+
+                polyeth.ready( function(){
+
+                    debug( 'ready...' )
+
+                    var SELF_ADDRESS = polyeth.secretToAddress( polyeth.key );
+
+                    debug( SELF_ADDRESS, typeof SELF_ADDRESS )
+
+                    // polyeth.eth.watch( OCCAMSRUN_ADDRESS, updateInfo )
+
+                    polyeth.watch( OCCAMSRUN_ADDRESS, updateInfo );
+                    
+
+                    $('.send').click( send )
+                    $('.withdraw').click( withdraw )
+
+                    function updateInfo() {
+                        $('.occamsBalance').html( polyeth.balanceAt( OCCAMSRUN_ADDRESS ) )
+                        $('.playerCount').html( polyeth.storageAt( OCCAMSRUN_ADDRESS, '0x17' ) )
+                        $('.balance').html( polyeth.storageAt( OCCAMSRUN_ADDRESS, SELF_ADDRESS ) )
+                        debug( 'updated info')
                     }
 
                     function send() {
                         var value = parseInt( $('.amount').val() );
-                        eth.sendTX( occam, value, [], function(){ } )
+                        polyeth.sendTX( occam, value, [], function(){ } )
                     }
 
                     function withdraw(){
-                        eth.sendTX( occam, value, ['withdraw'],function(){ } )   
+                        debug( 'withdrawing', polyeth.storageAt( OCCAMSRUN_ADDRESS, SELF_ADDRESS ) )
+                        polyeth.transact( polyeth.key, '0x0', OCCAMSRUN_ADDRESS, [ '0x1'.bin() ], '0x10', '0x100', function(){debug('withdrawn')}) 
                     }
 
-                    $('.send').click( send )
-                    $('.withdraw').click( withdraw )
 
                 })
 

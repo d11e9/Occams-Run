@@ -1,0 +1,49 @@
+init:
+    contract.storage[0x0] = msg.sender
+    contract.storage[0x1] = block.prevhash
+    
+    if msg.value:
+        send( msg.sender, msg.value )
+
+code:
+    
+    # Occams Run v0.0.2
+    # 1: Withdraw
+    #   Send all funds at stake for sender, including msg.value, to sender.
+    #   return 1
+    # 
+    # Default action 
+    # If not withdrawing, and if msg.value is non-zero, flip a coin:
+    #
+    # Heads:
+    #   Add the msg.value to senders total stake.
+    #   return 1
+    #
+    # Tails:
+    #   Distribute msg.value and all msg.sender's stake to existing stake holders.
+    #   Set msg.sender's total stake to 0
+    #   return 0
+    #
+    # Noop Action
+    # If not withdrawing or msg.value is zero, then return 0
+    # 
+
+    action = msg.data[0]
+
+    # Withdraw
+    if action == 1:
+        send( msg.sender, contract.storage[msg.sender] + msg.value )
+        contract.storage[msg.sender] = 0x0
+        contract.storage[0x100] = 0x1
+        return( 1 )
+
+    # Play
+    if msg.value > 0:
+        contract.storage[msg.sender] = contract.storage[msg.sender] + msg.value
+        contract.storage[0x100] = 0x2
+        contract.storage[0x1] = block.prevhash
+        return( 1 )
+
+    # Noop
+    contract.storage[0x100] = 0x3
+    return( 0 )
