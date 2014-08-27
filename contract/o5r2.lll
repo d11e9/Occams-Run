@@ -1,0 +1,379 @@
+{
+    [[0x0]] (caller)
+
+    ;; Library: LinkedList
+    ;;
+    ;; This is an include for contracts using a standard doubly linked list.
+    ;; The list works with pointers to elements, and has no idea about what
+    ;; those pointers actually are. 
+    ;;
+    ;; The list 'object' itself requires 3 storage addresses, one for the
+    ;; list size, one for a pointer to the tail element, and one for a pointer
+    ;; to the head element.
+    ;;
+    ;; A list element needs two storage addresses pointing to its 'previous' and 
+    ;; 'next' element. Element data is stored in consecutive storage addresses 
+    ;; starting at 'elemAddress'.
+    ;;
+    ;; (see LinkedListElement.png)
+    ;;
+    ;; The previous/next element pointers are added and removed automatically, but 
+    ;; elements must be created manually (to avoid weird, additional for-loops etc.).
+    ;; This would be an example of how to create an element with storage address 
+    ;; (CALLER) that stores one single element (a user name).
+    ;;
+    ;; (begin code)
+    ;; [[(CALLER)]] "userName"
+    ;; ; Add a cross reference maybe?
+    ;; [["userName"]] (CALLER)
+    ;; (addToList (CALLER))
+    ;; (end)
+    ;;
+    ;; Storage-addresses for elements are handed to the list by the user. This is 
+    ;; practical when you use the typical [[(CALLER]] or [["name"]], like in user 
+    ;; and bank contracts. If you want storage addresses to be allocated automatically, 
+    ;; use LinkedListAM (Address Managed).
+    ;;
+    ;; For example usage, see the example/users.lsp contract. 
+    ;; 
+    ;; Version:
+    ;; 0.0.1
+    ;;
+    ;; Authors:
+    ;; Andreas Olofsson (androlo1980@gmail.com)
+    ;;
+    ;; License:
+    ;; https://github.com/androlo/LLL-commons/blob/master/LICENSE.md
+    ;;
+    ;; StorageReq:
+    ;; SIZE_ADDR - defaults to 0x11
+    ;; TAIL_ADDR - defaults to 0x12
+    ;; HEAD_ADDR - defaults to 0x13
+    {
+        ;; Constants: Addresses
+        ;;
+        ;; SIZE_ADDR - the storage address used for list size.
+        ;; TAIL_ADDR - the storage address used for tail.
+        ;; HEAD_ADDR - the storage address used for head.
+        (def "SIZE_ADDR" 0x11)
+        (def "TAIL_ADDR" 0x12)
+        (def "HEAD_ADDR" 0x13)
+        
+        ;; Function: _setHead (newHeadAddr)
+        ;;
+        ;; Set the head element. Should not be called directly.
+        ;;
+        ;; Parameters:
+        ;; newHeadAddr - Address to the new head.
+        ;;
+        ;; Returns:
+        ;; void
+        (def "_setHead" (newHeadAddr) [[HEAD_ADDR]] newHeadAddr)
+        
+        ;; Function: _setTail (newTailAddr)
+        ;;
+        ;; Set the tail element. Should not be called directly.
+        ;;
+        ;; Parameters:
+        ;; newTailAddr - Address to the new tail.
+        ;;
+        ;; Returns:
+        ;; void
+        (def "_setTail" (newTailAddr) [[TAIL_ADDR]] newTailAddr)
+        
+        ;; Function: _setPrev (elemAddr newPrevAddr)
+        ;;
+        ;; Set the previous element of an existing element. Should not be called directly.
+        ;;
+        ;; Parameters:
+        ;; elemAddr - Address to the current element.
+        ;; newPrevAddr - Address to the element that will be the new 'prev'
+        ;;
+        ;; Returns:
+        ;; void
+        (def "_setPrev" (elemAddr newPrevAddr) 
+            {
+                [[(- elemAddr 1)]] newPrevAddr
+            }
+        )
+        
+        ;; Function: _setNext (elemAddr newNextAddr)
+        ;;
+        ;; Set the next element of an existing element. Should not be called directly.
+        ;;
+        ;; Parameters:
+        ;; elemAddr - Address to the current element.
+        ;; newNextAddr - Address to the element that will be the new 'next'
+        ;;
+        ;; Returns:
+        ;; void
+        (def "_setNext" (elemAddr newNextAddr) 
+            {
+                [[(- elemAddr 2)]] newNextAddr
+            }
+        )
+        
+        ;; Function: size ()
+        ;;
+        ;; Get the size of the list
+        ;;
+        ;; Parameters:
+        ;; void
+        ;;
+        ;; Returns:
+        ;; Size of the list.
+        (def "size" @@SIZE_ADDR)
+        
+        ;; Function: tail ()
+        ;;
+        ;; Get the tail element.
+        ;;
+        ;; Parameters:
+        ;; void
+        ;;
+        ;; Returns:
+        ;; Address of the tail element (or null).
+        (def "tail" @@TAIL_ADDR)
+        
+        ;; Function: head ()
+        ;;
+        ;; Get the head element.
+        ;;
+        ;; Parameters:
+        ;; void
+        ;;
+        ;; Returns:
+        ;; Address of the head element (or null).
+        (def "head" @@HEAD_ADDR)
+        
+        ;; Function: prev (elemAddr)
+        ;;
+        ;; Get the previous element.
+        ;;
+        ;; Parameters:
+        ;; elemAddr - Address to the current element.
+        ;;
+        ;; Returns:
+        ;; Address to the previous element (or null).
+        (def "prev" (elemAddr) @@(- elemAddr 1) )
+        
+        ;; Function: next (elemAddr)
+        ;;
+        ;; Get the next element element.
+        ;;
+        ;; Parameters:
+        ;; elemAddr - Address to the current element.
+        ;;
+        ;; Returns:
+        ;; Address to the next element (or null).
+        (def "next" (elemAddr) @@(- elemAddr 2) )
+        
+        ;; Function: addToList (elemAddr)
+        ;;
+        ;; Add a new element at the end of the list.
+        ;;
+        ;; Parameters:
+        ;; elemAddr - Address to the new element.
+        ;;
+        ;; Returns:
+        ;; void
+        (def "addToList" (elemAddr) 
+            {
+                [mTemp0] head
+                [mTemp1] @@SIZE_ADDR
+                (def "mHead" mTemp0) ; Store address to head at "mHead"
+                (def "curSize" @mTemp1)
+                (if curSize ; If there are elements in the list. 
+                    {
+                        ;Set the 'next' of the current head to be this one.
+                        (_setNext @mHead elemAddr)
+                        ;Now set the current head as this ones 'previous'.
+                        (_setPrev elemAddr @mHead)  
+                    } 
+                    {
+                        ;If no elements, add this as tail
+                        (_setTail elemAddr)
+                    }
+                )
+                (_setHead elemAddr)
+                ;Increase the list size by one.
+                [[SIZE_ADDR]] (+ curSize 1)
+            }
+        )
+        
+        ;; Function: removeFromList (elemAddr)
+        ;;
+        ;; Remove an element from the list.
+        ;;
+        ;; Parameters:
+        ;; elemAddr - Address to the element.
+        ;;
+        ;; Returns:
+        ;; void
+        (def "removeFromList" (elemAddr) 
+            {
+                
+                [mTemp0] (prev elemAddr) ; Here we store the this ones 'previous'.
+                [mTemp1] (next elemAddr) ; And next
+                
+                (def "mThisPrevious" mTemp0 )
+                (def "mThisNext" mTemp1 )
+            
+                ; If we are not the head.
+                (if @mThisNext
+                    {
+                        (if @mThisPrevious
+                            {
+                                ;Change next elements 'previous' to this ones 'previous'.
+                                (_setPrev @mThisNext @mThisPrevious)
+                                ;Change previous elements 'next' to this ones 'next'.
+                                (_setNext @mThisPrevious @mThisNext)
+                            }
+                            {
+                                ; We are tail. Set next elements previous to 0
+                                (_setPrev @mThisNext 0)
+                                ; Set next element as current tail.
+                                (_setTail @mThisNext)
+                            }
+                        )
+                    }
+
+                    {
+                        (if @mThisPrevious
+                            {
+                                ;This element is the head - unset 'next' for the previous element making it the head.
+                                (_setNext @mThisPrevious 0)
+                                ;Set previous as head
+                                (_setHead @mThisPrevious)
+                            }
+                            {
+                                ; This element is the tail - and the last element. Reset head and tail.
+                                (_setHead 0)
+                                (_setTail 0)
+                            }                   
+                        )
+                    }
+                )
+                
+                
+                ;Now clean up any head or prev this element might have had.
+                (_setNext elemAddr 0)
+                (_setPrev elemAddr 0)
+                ;Decrease the size counter
+                [[SIZE_ADDR]] (- size 1)
+            }
+        )
+        
+    }
+
+
+    ;; Occam's Run v0.0.3
+    ;; Actions:
+    ;; data[0] == 1 then Withdraw Stake
+    ;; data[0] == 2 the Mine previous players wagers
+    ;; data[0] == 9 then Kill Contract
+    ;; callvalue > 0 then Play
+    ;; else Nothing.
+
+    (def "CREATOR_ADDRESS" 0x0)
+    (def "LAST_ACTION" 0x1)
+
+    (def "OLDEST_BLOCK" 0x2)
+    (def "OLDEST_TIME" 0x3)
+
+    (def "NEWEST_BLOCK" 0x4)
+    (def "NEWEST_TIME" 0x5)
+
+    [[CREATOR_ADDRESS]] (caller)
+
+    (returnlll {
+
+        ;; [1]: Withdraw action
+        (when (= (calldataload 0) 1) {
+            [[LAST_ACTION]] 0x5
+            (when @@(caller){
+                [[(caller)]] 0x0
+                (removeFromList (caller))
+                (send (caller) @@(caller))
+                (return 0x1)
+            })
+
+            (return 0x0)
+        })
+
+        ;; [2]: Mine 
+        (when (= (calldataload 0) 2) {
+            [[LAST_ACTION]] 0x4
+
+            (when @@OLDEST_BLOCK {
+
+                [block_num] @@OLDEST_BLOCK
+                [timestamp] @@OLDEST_TIME
+                [player_add] @block_num
+                [player_wager] @timestamp
+
+                (unless @player_add (return 0x0))
+                (unless @player_wager (return 0x0))
+
+                ;; if the oldest block (head of queue) has matured
+                (when (<= (+ @block_num 5) (number)) {
+                    ;; process it
+                    ;; flip coin
+                    ;;      increase stake
+                    ;;      or distribute to stakeolders sans (caller)
+                    ;; remove it and repoint oldest block pointers to next one along
+                    (for [i]:@block_num (< @i (number)) [i](+ @i 1) {
+                        (when @@i {
+                            ;; do something
+                            [[OLDEST_BLOCK]] @i
+                            ;; [[OLDEST_TIME]] 
+                            (return 0x1)
+                        })
+                    })
+                })
+            })
+
+            (return 0x0)
+        })
+
+        ;; [9]: Kill action
+        (when (= (calldataload 0) 9) {
+            [[LAST_ACTION]] 0x3
+
+            ;; Only allow creator to kill
+            (unless (= @@0x0 (caller)) {
+                ;; TODO
+                ;; Distribute stake to stakeholders
+                ;; Then suicide.
+                (return 0x1)
+            })
+            
+            (return 0x0)
+        })
+
+        ;; []: No action => Play
+        (when (> (callvalue) 0) {
+            [[LAST_ACTION]] 0x2
+
+            ;; Play Action
+            ;; [[OLDEST_BLOCK]] (number)
+            ;; [[OLDEST_TIME]] (timestamp)
+            ;; [[(number)]] (caller)
+            ;; [[timestamp]] (callvalue)
+
+            (if @@(caller) {
+                [[(caller)]] (+ @@(caller) (callvalue))
+            }{
+                [[(caller)]] (callvalue)    
+                (addToList (caller))
+            })
+            (return 0x1)
+        })
+
+
+        ;; Noop
+        [[0x1]] 0x1
+        (return 0x0)
+
+    })
+}

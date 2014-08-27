@@ -71,6 +71,14 @@
             .right { float: right; }
 
             .players span { margin-right: 2em; }
+
+            .debug {
+                display: none;
+            }
+            .debug p {
+                line-height: 1.4em;
+                margin: 0;
+            }
         </style>
         <script src="jquery.min.js"></script>
     </head>
@@ -79,7 +87,7 @@
         <div id="wrapper">
             <div class="header">
                 <h1>
-                    <img src="logo-0.0.2.png" alt="Occam's Run">
+                    <img class="logo" src="logo-0.0.2.png" alt="Occam's Run">
                 </h1>
                 <p>All things being equal (50/50) only the brave will win.</p>
             </div>
@@ -96,7 +104,7 @@
             </div>
 
             <div class="debug">
-                
+                <p>Log:</p>
             </div>
             
         </div>
@@ -104,11 +112,10 @@
         <script src="poly-eth/poly-eth.bundle.js"></script>
         <script>
 
-                var polyeth = polyeth( typeof eth === 'undefined' ? undefined : eth );
-                var OCCAMSRUN_ADDRESS = '0x977bed08637eb96968a5f28a93eb5ea9c2692d5d';
+                if (typeof eth === 'undefined') var eth = polyeth( typeof eth === 'undefined' ? undefined : eth );
+                var OCCAMSRUN_ADDRESS = '0x4589e9bbb3606d6a9597f03126323020a3a62a63';
 
                 function debug() {
-
                     for (var x=0; x<arguments.length; x++) {
                         $('.debug').append( $( '<p>'+arguments[x]+'</p>' ) )  
                     }
@@ -118,41 +125,68 @@
                     debug("error:", err)
                 }
 
-                polyeth.ready( function(){
+                function weiToEther(wei) {
+                    return wei / 1000000000000000000;
+                }
+                function etherToWei(ether) {
+                    return ether * 1000000000000000000;
+                }
 
-                    debug( 'ready...' )
+                function hexToInt(hex) {
+                    return parseInt( hex, 16 );
+                }
 
-                    var SELF_ADDRESS = polyeth.secretToAddress( polyeth.key );
+                function intToHex(int) {
+                    return int.toString( 16 );
+                }
 
-                    debug( SELF_ADDRESS, typeof SELF_ADDRESS )
+                function playerCount() {
+                    return hexToInt( eth.storageAt( OCCAMSRUN_ADDRESS, 17 ) );
+                }
 
-                    // polyeth.eth.watch( OCCAMSRUN_ADDRESS, updateInfo )
+                function address(){
+                    return eth.secretToAddress( eth.key );
+                }
+                function updateInfo() {
 
-                    polyeth.watch( OCCAMSRUN_ADDRESS, updateInfo );
-                    
+                    debug( 'Updating info.');
+                    var SELF_ADDRESS = address();
+                    var occamsBalance = weiToEther( hexToInt( eth.balanceAt( OCCAMSRUN_ADDRESS ) ) )
+                    var balance = weiToEther( intToHex( eth.storageAt( OCCAMSRUN_ADDRESS, SELF_ADDRESS ) ) )
 
+                    $('.occamsBalance').html( occamsBalance )
+                    $('.balance').html( balance )
+                    $('.playerCount').html( playerCount() )
+                    debug( 'Done.')
+                }
+
+                function send() {
+                    var value = etherToWei( parseInt( $('.amount').val() ) );
+                    // eth.transact(eth.key, "0", gavCoinAddr, "", "2000", eth.gasPrice);
+                    eth.transact( eth.key, value, OCCAMSRUN_ADDRESS, "", "2000", eth.eth.gasPrice, function(err){debug('Sent ' + value + ' to Occam\'s Run.', err  )}) 
+                }
+
+                function withdraw(){
+                    debug( 'Withdrawing (' + polyeth.storageAt( OCCAMSRUN_ADDRESS, address() ) + ') from Occam\'s Run.' )
+                    eth.transact( eth.key, 0, OCCAMSRUN_ADDRESS, [ '0x1'.bin() ], 10, 1000, function(){debug('Withdrawn all stake.')}) 
+                }
+
+
+                function init () {
+                    debug( 'eth: ' + eth.client + ' ready...' )
+
+                    eth.watch( OCCAMSRUN_ADDRESS, updateInfo );
+
+                    debug( 'Attaching button handlers.')
+
+                    $('.logo').click( function(){$('.debug').toggle()})
                     $('.send').click( send )
                     $('.withdraw').click( withdraw )
-
-                    function updateInfo() {
-                        $('.occamsBalance').html( polyeth.balanceAt( OCCAMSRUN_ADDRESS ) )
-                        $('.playerCount').html( polyeth.storageAt( OCCAMSRUN_ADDRESS, '0x17' ) )
-                        $('.balance').html( polyeth.storageAt( OCCAMSRUN_ADDRESS, SELF_ADDRESS ) )
-                        debug( 'updated info')
-                    }
-
-                    function send() {
-                        var value = parseInt( $('.amount').val() );
-                        polyeth.sendTX( occam, value, [], function(){ } )
-                    }
-
-                    function withdraw(){
-                        debug( 'withdrawing', polyeth.storageAt( OCCAMSRUN_ADDRESS, SELF_ADDRESS ) )
-                        polyeth.transact( polyeth.key, '0x0', OCCAMSRUN_ADDRESS, [ '0x1'.bin() ], '0x10', '0x100', function(){debug('withdrawn')}) 
-                    }
+                }
 
 
-                })
+                if (eth.ready) eth.ready( init );
+                else init();
 
         </script>
 
