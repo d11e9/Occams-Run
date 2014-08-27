@@ -112,7 +112,7 @@
         <script src="poly-eth/poly-eth.bundle.js"></script>
         <script>
 
-                var polyeth = polyeth( typeof eth === 'undefined' ? undefined : eth );
+                if (typeof eth === 'undefined') var eth = polyeth( typeof eth === 'undefined' ? undefined : eth );
                 var OCCAMSRUN_ADDRESS = '0x4589e9bbb3606d6a9597f03126323020a3a62a63';
 
                 function debug() {
@@ -141,18 +141,18 @@
                 }
 
                 function playerCount() {
-                    return hexToInt( polyeth.storageAt( OCCAMSRUN_ADDRESS, 17 ) );
+                    return hexToInt( eth.storageAt( OCCAMSRUN_ADDRESS, 17 ) );
                 }
 
                 function address(){
-                    return polyeth.secretToAddress( polyeth.key );
+                    return eth.secretToAddress( eth.key );
                 }
                 function updateInfo() {
 
                     debug( 'Updating info.');
                     var SELF_ADDRESS = address();
-                    var occamsBalance = weiToEther( hexToInt( polyeth.balanceAt( OCCAMSRUN_ADDRESS ) ) )
-                    var balance = weiToEther( intToHex( polyeth.storageAt( OCCAMSRUN_ADDRESS, SELF_ADDRESS ) ) )
+                    var occamsBalance = weiToEther( hexToInt( eth.balanceAt( OCCAMSRUN_ADDRESS ) ) )
+                    var balance = weiToEther( intToHex( eth.storageAt( OCCAMSRUN_ADDRESS, SELF_ADDRESS ) ) )
 
                     $('.occamsBalance').html( occamsBalance )
                     $('.balance').html( balance )
@@ -163,28 +163,30 @@
                 function send() {
                     var value = etherToWei( parseInt( $('.amount').val() ) );
                     // eth.transact(eth.key, "0", gavCoinAddr, "", "2000", eth.gasPrice);
-                    polyeth.transact( polyeth.key, value, OCCAMSRUN_ADDRESS, "", "2000", polyeth.eth.gasPrice, function(err){debug('Sent ' + value + ' to Occam\'s Run.', err  )}) 
+                    eth.transact( eth.key, value, OCCAMSRUN_ADDRESS, "", "2000", eth.eth.gasPrice, function(err){debug('Sent ' + value + ' to Occam\'s Run.', err  )}) 
                 }
 
                 function withdraw(){
                     debug( 'Withdrawing (' + polyeth.storageAt( OCCAMSRUN_ADDRESS, address() ) + ') from Occam\'s Run.' )
-                    polyeth.transact( polyeth.key, 0, OCCAMSRUN_ADDRESS, [ '0x1'.bin() ], 10, 1000, function(){debug('Withdrawn all stake.')}) 
+                    eth.transact( eth.key, 0, OCCAMSRUN_ADDRESS, [ '0x1'.bin() ], 10, 1000, function(){debug('Withdrawn all stake.')}) 
                 }
 
 
-                polyeth.ready( function(){
+                function init () {
+                    debug( 'eth: ' + eth.client + ' ready...' )
 
-                    debug( 'polyeth: ' + polyeth.client + ' ready...' )
-
-                    polyeth.watch( OCCAMSRUN_ADDRESS, updateInfo );
+                    eth.watch( OCCAMSRUN_ADDRESS, updateInfo );
 
                     debug( 'Attaching button handlers.')
 
                     $('.logo').click( function(){$('.debug').toggle()})
                     $('.send').click( send )
                     $('.withdraw').click( withdraw )
+                }
 
-                })
+
+                if (eth.ready) eth.ready( init );
+                else init();
 
         </script>
 
